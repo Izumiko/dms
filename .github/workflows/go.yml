@@ -1,0 +1,89 @@
+name: goreleaser
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      -
+        name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.23
+      -
+        name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          # either 'goreleaser' (default) or 'goreleaser-pro'
+          distribution: goreleaser
+          version: latest
+          args: release --clean --snapshot --config ${{ github.workspace }}/.github/goreleaser.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Your GoReleaser Pro key, if you are using the 'goreleaser-pro' distribution
+          # GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
+      -
+        name: Upload artifact dms_linux_amd64
+        uses: actions/upload-artifact@v4
+        with:
+          name: dms_linux_amd64
+          path: dist/my-build_linux_amd64_v1/dms
+      -
+        name: Upload artifact dms_linux_386
+        uses: actions/upload-artifact@v4
+        with:
+          name: dms_linux_386
+          path: dist/my-build_linux_386_sse2/dms
+      -
+        name: Upload artifact dms_linux_arm_7
+        uses: actions/upload-artifact@v4
+        with:
+          name: dms_linux_arm_7
+          path: dist/my-build_linux_arm_7/dms
+      -
+        name: Upload artifact dms_linux_arm64
+        uses: actions/upload-artifact@v4
+        with:
+          name: dms_linux_arm64
+          path: dist/my-build_linux_arm64_v8.0/dms
+      -
+        name: Upload artifact dms_darwin_arm64
+        uses: actions/upload-artifact@v4
+        with:
+          name: dms_darwin_arm64
+          path: dist/my-build_darwin_arm64_v8.0/dms
+      -
+        name: Upload artifact dms_darwin_amd64
+        uses: actions/upload-artifact@v4
+        with:
+          name: dms_darwin_amd64
+          path: dist/my-build_darwin_amd64_v1/dms
+      -
+        name: Upload artifact dms_windows_arm64.exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: dms_windows_arm64
+          path: dist/my-build_windows_arm64_v8.0/dms.exe
+      -
+        name: Upload artifact dms_windows_amd64.exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: dms_windows_amd64
+          path: dist/my-build_windows_amd64_v1/dms.exe
+      -
+        name: Upload artifact dms_windows_386.exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: dms_windows_386
+          path: dist/my-build_windows_386_sse2/dms.exe
