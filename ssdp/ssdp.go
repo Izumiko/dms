@@ -148,6 +148,11 @@ func (me *Server) Close() {
 func (me *Server) Serve() (err error) {
 	go me.serve()
 	for {
+		select {
+		case <-me.closed:
+			return nil
+		default:
+		}
 		addrs, err := me.Interface.Addrs()
 		if err != nil {
 			return err

@@ -7,9 +7,9 @@ import (
 	"flag"
 	"fmt"
 	"image"
+	//"image/draw"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/signal"
@@ -21,11 +21,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/anacrolix/log"
-	"github.com/nfnt/resize"
-
 	"github.com/anacrolix/dms/dlna/dms"
 	"github.com/anacrolix/dms/rrcache"
+	"github.com/anacrolix/log"
+	"golang.org/x/image/draw"
 )
 
 //go:embed "data/VGC Sonic.png"
@@ -118,7 +117,8 @@ func (fc *fFprobeCache) Set(key interface{}, value interface{}) {
 func main() {
 	err := mainErr()
 	if err != nil {
-		log.Fatalf("error in main: %v", err)
+		log.Printf("error in main: %v", err)
+		os.Exit(1)
 	}
 }
 
@@ -173,7 +173,7 @@ func mainErr() error {
 
 	logger.Printf("allowed ip nets are %q", config.AllowedIpNets)
 	logger.Printf("serving folder %q", config.Path)
-	if(config.AllowDynamicStreams) {
+	if config.AllowDynamicStreams {
 		logger.Printf("Dynamic streams ARE allowed")
 	}
 
@@ -202,7 +202,8 @@ func mainErr() error {
 				}
 			}
 			if err != nil {
-				log.Fatal(err)
+				log.Print(err)
+				os.Exit(1)
 			}
 			var tmp []net.Interface
 			for _, if_ := range ifs {
@@ -217,7 +218,8 @@ func mainErr() error {
 		HTTPConn: func() net.Listener {
 			conn, err := net.Listen("tcp", config.Http)
 			if err != nil {
-				log.Fatal(err)
+				log.Print(err)
+				os.Exit(1)
 			}
 			return conn
 		}(),
@@ -254,11 +256,13 @@ func mainErr() error {
 		AllowedIpNets:       config.AllowedIpNets,
 	}
 	if err := dmsServer.Init(); err != nil {
-		log.Fatalf("error initing dms server: %v", err)
+		log.Printf("error initing dms server: %v", err)
+		os.Exit(1)
 	}
 	go func() {
 		if err := dmsServer.Run(); err != nil {
-			log.Fatal(err)
+			log.Print(err)
+			os.Exit(1)
 		}
 	}()
 	sigs := make(chan os.Signal, 1)
@@ -266,7 +270,8 @@ func mainErr() error {
 	<-sigs
 	err := dmsServer.Close()
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		os.Exit(1)
 	}
 	if err := cache.save(config.FFprobeCachePath); err != nil {
 		log.Print(err)
@@ -297,7 +302,7 @@ func (cache *fFprobeCache) save(path string) error {
 	cache.Lock()
 	items := cache.c.Items()
 	cache.Unlock()
-	f, err := ioutil.TempFile(filepath.Dir(path), filepath.Base(path))
+	f, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path))
 	if err != nil {
 		return err
 	}
@@ -327,7 +332,7 @@ func (cache *fFprobeCache) save(path string) error {
 
 func getIconReader(path string) (io.ReadCloser, error) {
 	if path == "" {
-		return ioutil.NopCloser(bytes.NewReader(defaultIcon)), nil
+		return io.NopCloser(bytes.NewReader(defaultIcon)), nil
 	}
 	return os.Open(path)
 }
@@ -346,9 +351,14 @@ func readIcon(path string, size uint) []byte {
 }
 
 func resizeImage(imageData image.Image, size uint) []byte {
-	img := resize.Resize(size, size, imageData, resize.Lanczos3)
+	dst := image.NewRGBA(image.Rect(0, 0, int(size), int(size)))
+	draw.ApproxBiLinear.Scale(dst, dst.Bounds(), imageData, imageData.Bounds(), draw.Over, nil)
+	//img := resize.Resize(size, size, imageData, resize.Lanczos3)
 	var buff bytes.Buffer
-	png.Encode(&buff, img)
+	err := png.Encode(&buff, dst)
+	if err != nil {
+		panic(err)
+	}
 	return buff.Bytes()
 }
 
