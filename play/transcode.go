@@ -20,11 +20,13 @@ func main() {
 	t := flag.String("t", "", "")
 	flag.Parse()
 	if flag.NArg() != 1 {
-		log.Fatalln("wrong argument count")
+		log.Println("wrong argument count")
+		os.Exit(1)
 	}
 	r, err := misc.Transcode(flag.Arg(0), *ss, *t)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
+		os.Exit(1)
 	}
 	go func() {
 		buf := bufio.NewWriterSize(os.Stdout, 1234)

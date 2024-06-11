@@ -484,11 +484,11 @@ func getDefaultFriendlyName() string {
 	return fmt.Sprintf("%s: %s on %s",
 		rootDeviceModelName,
 		func() string {
-			user, err := user.Current()
+			u, err := user.Current()
 			if err != nil {
 				log.Panicf("getDefaultFriendlyName could not get username: %s", err)
 			}
-			return user.Name
+			return u.Name
 		}(),
 		func() string {
 			name, err := os.Hostname()
