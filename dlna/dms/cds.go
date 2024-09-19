@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -61,7 +60,7 @@ type dmsDynamicMediaItem struct {
 }
 
 func readDynamicStream(metadataPath string) (*dmsDynamicMediaItem, error) {
-	bytes, err := ioutil.ReadFile(metadataPath)
+	bytes, err := os.ReadFile(metadataPath)
 	if err != nil {
 		return nil, err
 	}
@@ -100,12 +99,12 @@ func (me *contentDirectoryService) cdsObjectDynamicStreamToUpnpavObject(cdsObjec
 	obj.AlbumArtURI = iconURI
 
 	switch dmsMediaItem.Type {
-		case "video":
-			obj.Class = "object.item.videoItem"
-		case "audio":
-			obj.Class = "object.item.audioItem"
-		default:
-			obj.Class = "object.item.videoItem"
+	case "video":
+		obj.Class = "object.item.videoItem"
+	case "audio":
+		obj.Class = "object.item.audioItem"
+	default:
+		obj.Class = "object.item.videoItem"
 	}
 
 	obj.Title = dmsMediaItem.Title
