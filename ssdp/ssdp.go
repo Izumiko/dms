@@ -150,10 +150,9 @@ func (me *Server) Serve() (err error) {
 	for {
 		select {
 		case <-me.closed:
-			return
+			return nil
 		default:
 		}
-
 		addrs, err := me.Interface.Addrs()
 		if err != nil {
 			return err
